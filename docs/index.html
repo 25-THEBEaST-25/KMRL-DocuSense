@@ -73,6 +73,11 @@ a{color:var(--accent);text-decoration:none;}
 .user-role{font-size:10px;color:var(--muted);}
 .theme-btn{width:26px;height:26px;border-radius:6px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:14px;transition:background .12s;}
 .theme-btn:hover{background:var(--border);}
+/* ── theme toggle pill (topbar) ── */
+.theme-toggle{display:flex;align-items:center;gap:0;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;}
+.theme-opt{display:flex;align-items:center;gap:5px;padding:6px 11px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;user-select:none;border:none;background:none;}
+.theme-opt svg{width:13px;height:13px;flex-shrink:0;}
+.theme-opt.t-active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08);border-radius:7px;margin:2px;}
 
 /* ── main ── */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
@@ -606,7 +611,7 @@ a{color:var(--accent);text-decoration:none;}
           <div class="user-name" id="sidebarName">KMRL Staff</div>
           <div class="user-role" id="sidebarRole">Station Engineer</div>
         </div>
-        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">☾</button>
+        <button class="theme-btn" id="sidebarThemeBtn" onclick="toggleTheme()" title="Toggle theme">☾</button>
       </div>
     </div>
   </nav>
@@ -618,6 +623,17 @@ a{color:var(--accent);text-decoration:none;}
       <span class="topbar-sub" id="topbarSub">Good morning</span>
       <div class="topbar-right">
         <span class="pro-badge" id="proBadge" style="display:none">PRO TRIAL</span>
+        <!-- Theme toggle pill -->
+        <div class="theme-toggle" id="themePill">
+          <button class="theme-opt t-active" id="tOptLight" onclick="applyTheme('light')" title="Light mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            Light
+          </button>
+          <button class="theme-opt" id="tOptDark" onclick="applyTheme('dark')" title="Dark mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+            Dark
+          </button>
+        </div>
         <button class="ghost-btn" onclick="switchView('search',document.querySelector('[data-view=search]'))">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           Search
@@ -906,16 +922,26 @@ function updateUI() {
 function applyTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   try { localStorage.setItem('mm-theme', t); } catch(e){}
+  // sync topbar pill
+  const lBtn = document.getElementById('tOptLight');
+  const dBtn = document.getElementById('tOptDark');
+  if (lBtn && dBtn) {
+    lBtn.classList.toggle('t-active', t === 'light');
+    dBtn.classList.toggle('t-active', t === 'dark');
+  }
+  // sync sidebar moon/sun icon
+  const sBtn = document.getElementById('sidebarThemeBtn');
+  if (sBtn) sBtn.textContent = t === 'dark' ? '☀' : '☾';
 }
 function toggleTheme() {
   const cur = document.documentElement.getAttribute('data-theme');
   applyTheme(cur === 'dark' ? 'light' : 'dark');
 }
+// default: light mode for government officials
 try {
   const saved = localStorage.getItem('mm-theme');
-  if (saved) applyTheme(saved);
-  else if (window.matchMedia('(prefers-color-scheme: dark)').matches) applyTheme('dark');
-} catch(e) { applyTheme('dark'); }
+  applyTheme(saved || 'light');
+} catch(e) { applyTheme('light'); }
 
 // ── navigation ──
 const titles = {
