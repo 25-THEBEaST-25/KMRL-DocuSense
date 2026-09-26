@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kochi Metro — Document Intelligence AI</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>🚇 Kochi Metro — Document Intelligence AI</h1>
+    <nav>
+      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="upload">Upload</button>
+      <button class="tab-btn" data-tab="search">Search</button>
+      <button class="tab-btn" data-tab="assistant">AI Assistant</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="tab-content active">
+      <div class="stat-cards" id="statCards"></div>
+      <div class="charts-grid">
+        <div class="card"><h3>Department-wise Documents</h3><canvas id="categoryChart"></canvas></div>
+        <div class="card"><h3>Most Common Faults</h3><canvas id="faultChart"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>⚡ AI Insights</h3>
+        <ul id="insightsList"></ul>
+      </div>
+      <div class="card">
+        <h3>📅 Contracts Expiring Soon (30 days)</h3>
+        <table id="expiryTable"><thead><tr><th>File</th><th>Vendor</th><th>Expiry</th><th>Days Left</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- UPLOAD -->
+    <section id="upload" class="tab-content">
+      <div class="card">
+        <h3>Upload Document</h3>
+        <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.txt">
+        <button id="uploadBtn">Upload & Process</button>
+        <div id="uploadStatus"></div>
+        <pre id="uploadResult"></pre>
+      </div>
+    </section>
+
+    <!-- SEARCH -->
+    <section id="search" class="tab-content">
+      <div class="card">
+        <h3>Natural Language Search</h3>
+        <input type="text" id="searchInput" placeholder="e.g. Which stations had signalling failures in July?">
+        <button id="searchBtn">Search</button>
+        <div id="searchResults"></div>
+      </div>
+    </section>
+
+    <!-- ASSISTANT -->
+    <section id="assistant" class="tab-content">
+      <div class="card">
+        <h3>AI Assistant (RAG)</h3>
+        <input type="text" id="askInput" placeholder="e.g. What is the SOP for emergency evacuation?">
+        <button id="askBtn">Ask</button>
+        <div id="assistantAnswer"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
