@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (FastAPI)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install core backend deps (no heavy ML packages)
+        run: |
+          pip install fastapi uvicorn sqlalchemy python-dotenv python-dateutil \
+                      python-multipart rapidfuzz pandas openai
+
+      - name: Compile-check all backend modules
+        run: python -m compileall -q backend/
+
+      - name: Import-check backend modules (no DB/model init)
+        working-directory: backend
+        run: |
+          python -c "
+          import database, chunking, duplicate, extract, vectorstore
+          from routers import search, dashboard
+          print('backend imports OK')
+          "
+        env:
+          ALLOWED_ORIGINS: "http://localhost:3000"
+          OPENAI_API_KEY: "sk-test"
+
+  frontend:
+    name: Frontend (HTML lint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check index.html is well-formed
+        run: |
+          python3 -c "
+          from html.parser import HTMLParser
+          class Checker(HTMLParser):
+              pass
+          with open('frontend/index.html') as f:
+              Checker().feed(f.read())
+          print('index.html parsed OK')
+          "
