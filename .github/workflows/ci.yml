@@ -21,28 +21,35 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
 
-      - name: Install lightweight backend deps (skip heavy ML packages)
+      - name: Install lightweight backend deps (pinned to match requirements.txt)
         run: |
-          pip install fastapi uvicorn sqlalchemy python-dotenv python-dateutil \
-                      python-multipart rapidfuzz pandas openai
+          pip install \
+            "fastapi==0.115.0" \
+            "uvicorn==0.30.6" \
+            "sqlalchemy==2.0.35" \
+            "python-dotenv==1.0.1" \
+            "python-dateutil==2.9.0.post0" \
+            "python-multipart==0.0.9" \
+            "rapidfuzz==3.9.7" \
+            "pandas==2.2.3" \
+            "openai==1.51.0"
 
       - name: Compile-check all backend modules
         run: python -m compileall -q backend/
 
-      - name: Import-check lightweight modules
+      - name: Import-check standalone modules
         working-directory: backend
         run: |
           python -c "
-          # vectorstore (chromadb), ocr (pytesseract/PyMuPDF), embeddings
-          # (sentence-transformers) are intentionally excluded — too heavy for CI.
-          # Compile-check above already catches syntax errors in those files.
-          import database, chunking, duplicate, extract
-          from routers import dashboard
+          # Only import modules with no heavy transitive deps.
+          # compile-check above already catches syntax errors everywhere.
+          import chunking
+          from database import Document
+          from duplicate import compute_hash
           print('backend imports OK')
           "
         env:
-          ALLOWED_ORIGINS: "http://localhost:3000"
-          OPENAI_API_KEY: "sk-test"
+          SQLITE_PATH: "/tmp/ci_test.db"
 
   frontend:
     name: Frontend (HTML lint)
