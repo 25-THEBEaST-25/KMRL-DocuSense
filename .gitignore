@@ -1,6 +1,11 @@
 # Data directory (SQLite DB + ChromaDB vector store — generated locally by seed_db.py)
 data/
 
+# Python virtual environments
+venv/
+.venv/
+env/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
