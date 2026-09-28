@@ -33,9 +33,11 @@ jobs:
         working-directory: backend
         run: |
           python -c "
-          # Only check modules that don't need chromadb / sentence-transformers
+          # vectorstore (chromadb), ocr (pytesseract/PyMuPDF), embeddings
+          # (sentence-transformers) are intentionally excluded — too heavy for CI.
+          # Compile-check above already catches syntax errors in those files.
           import database, chunking, duplicate, extract
-          from routers import search, dashboard
+          from routers import dashboard
           print('backend imports OK')
           "
         env:
