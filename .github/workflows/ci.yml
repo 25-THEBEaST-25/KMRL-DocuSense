@@ -21,7 +21,7 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
 
-      - name: Install core backend deps (no heavy ML packages)
+      - name: Install lightweight backend deps (skip heavy ML packages)
         run: |
           pip install fastapi uvicorn sqlalchemy python-dotenv python-dateutil \
                       python-multipart rapidfuzz pandas openai
@@ -29,11 +29,12 @@ jobs:
       - name: Compile-check all backend modules
         run: python -m compileall -q backend/
 
-      - name: Import-check backend modules (no DB/model init)
+      - name: Import-check lightweight modules
         working-directory: backend
         run: |
           python -c "
-          import database, chunking, duplicate, extract, vectorstore
+          # Only check modules that don't need chromadb / sentence-transformers
+          import database, chunking, duplicate, extract
           from routers import search, dashboard
           print('backend imports OK')
           "
