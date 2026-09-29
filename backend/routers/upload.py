@@ -4,7 +4,6 @@ File -> OCR -> Extraction -> Classification -> Chunking -> Embedding
 -> Vector DB + SQLite -> Duplicate check
 """
 import os
-import shutil
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
@@ -18,6 +17,7 @@ from extract import extract_fields
 from chunking import chunk_text
 from vectorstore import add_chunks
 from duplicate import compute_hash, find_duplicate
+from upload_validation import validate_upload, max_upload_size_bytes
 
 load_dotenv()
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "../data/uploads")
@@ -27,11 +27,29 @@ router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 @router.post("/upload")
 async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    filepath = os.path.join(UPLOAD_DIR, file.filename)
+    safe_filename = validate_upload(file.filename, file.content_type)
+    max_size = max_upload_size_bytes()
 
-    with open(filepath, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    filepath = os.path.join(UPLOAD_DIR, safe_filename)
+
+    size = 0
+    try:
+        with open(filepath, "wb") as f:
+            while chunk := await file.read(1024 * 1024):
+                size += len(chunk)
+                if size > max_size:
+                    raise HTTPException(
+                        413,
+                        f"File too large. Max size is {max_size // (1024 * 1024)}MB.",
+                    )
+                f.write(chunk)
+    except HTTPException:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        raise
+
+    file.filename = safe_filename
 
     # 1. OCR / text extraction
     try:
