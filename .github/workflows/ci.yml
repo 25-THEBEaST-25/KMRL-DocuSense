@@ -32,7 +32,8 @@ jobs:
             "python-multipart==0.0.9" \
             "rapidfuzz==3.9.7" \
             "pandas==2.2.3" \
-            "openai==1.51.0"
+            "openai==1.51.0" \
+            "pytest==8.3.3"
 
       - name: Compile-check all backend modules
         run: python -m compileall -q backend/
@@ -48,6 +49,12 @@ jobs:
           from duplicate import compute_hash
           print('backend imports OK')
           "
+        env:
+          SQLITE_PATH: "/tmp/ci_test.db"
+
+      - name: Run backend unit tests
+        working-directory: backend
+        run: python -m pytest tests/ -v
         env:
           SQLITE_PATH: "/tmp/ci_test.db"
 
