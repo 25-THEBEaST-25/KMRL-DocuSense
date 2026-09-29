@@ -560,6 +560,14 @@ a{color:var(--accent);text-decoration:none;}
   </div>
 </div>
 
+<!-- ── Document Detail Modal ── -->
+<div class="modal-overlay" id="docDetailModal" style="display:none">
+  <div class="modal" style="max-width:580px;max-height:85vh;overflow-y:auto;padding:24px;">
+    <button class="modal-close" onclick="closeModal('docDetailModal')">✕</button>
+    <div id="docDetailInner"><div style="text-align:center;padding:40px 0;color:var(--muted)">Loading…</div></div>
+  </div>
+</div>
+
 <div class="app">
   <!-- Sidebar -->
   <nav class="sidebar">
@@ -881,6 +889,22 @@ a{color:var(--accent);text-decoration:none;}
 </nav>
 
 <script>
+const API_BASE = 'http://localhost:8000';
+const DEMO_MODE = true;  // set true for GitHub Pages (no backend needed)
+
+const DEMO_DOCS = [
+  {id:1,filename:'Signalling Fault Report — Palarivattom Jun–Aug 2024',category:'Maintenance',station:'Palarivattom',doc_date:'2024-08-18',severity:'High',fault:'Relay failure — moisture ingress into relay room B',resolution:'OEM (Alstom India) intervention; PCB K-21 replaced; temporary seal applied. Full waterproofing scheduled Q4.',engineer:'A. Krishnan',equipment:'Relay Room B — Axle Counter AC-07',reviewed:true,summary:'Three high-severity signalling incidents over 90 days. Root cause identified as moisture ingress into relay room B. Systemic issue traced to inadequate waterproofing from 2021 maintenance cycle. Estimated fix: ₹4.2L. Cost of inaction: ₹18–42L revenue impact.',tags:'Signalling,Palarivattom,High Severity,OEM,Alstom,Relay'},
+  {id:2,filename:'Monthly Track Inspection Log — Aluva Station Jul 2024',category:'Maintenance',station:'Aluva',doc_date:'2024-07-31',severity:'Medium',fault:'Track circuit failure — waterlogging in relay room during monsoon',resolution:'Drainage pump installed; circuit dried and tested; relay contacts cleaned',engineer:'R. Menon',equipment:'Track Circuit TC-ALV-09',reviewed:true,summary:'Track circuit failure at Aluva due to waterlogging during July monsoon. Relay room drainage found inadequate for monsoon conditions. Circuit fully restored after drainage pump installation.',tags:'Track,Aluva,Monsoon,July 2024,Track Circuit'},
+  {id:3,filename:'Vendor Contract — Track Maintenance Q4 2024',category:'Vendor',station:'Network',doc_date:'2024-10-01',severity:null,fault:null,resolution:null,engineer:'Procurement Cell',vendor:'M/s. TechRail Services Ltd.',amount:'₹1.2 Crore',contract_expiry:'2024-10-31',reviewed:true,summary:'Annual track maintenance contract covering all 25 stations. Scope: rail grinding, ballast tamping, fastening inspection. Contract renewal required by October 31, 2024.',tags:'Vendor,Track,Maintenance,Contract,Q4,TechRail'},
+  {id:4,filename:'Emergency Evacuation SOP v2.4 — All Stations',category:'Safety',station:'Network',doc_date:'2024-01-15',severity:null,fault:null,resolution:null,engineer:'Safety Division',reviewed:true,summary:'Standard Operating Procedure for emergency evacuation across KMRL network. Covers PA trigger protocol, staff roles, crowd management, OCC coordination. Target: full evacuation within 8 minutes. Annexure B lists assembly points per station.',tags:'SOP,Safety,Evacuation,Emergency,Network,8 minutes'},
+  {id:5,filename:'Escalator Fault Log — Aluva Station Sep 2024',category:'Maintenance',station:'Aluva',doc_date:'2024-09-14',severity:'Medium',fault:'Escalator ESC-ALV-04 breakdown — comb plate damage',resolution:'Preventive maintenance completed; comb plate replaced by Otis India within 6 hours',engineer:'M. Pillai',equipment:'ESC-ALV-04 (Otis)',reviewed:false,summary:'Escalator breakdown at Aluva station due to comb plate damage. Passenger safety risk: low (adjacent escalator operational). Resolved by OEM within 6 hours. Inspection schedule updated to monthly cycle.',tags:'Escalator,Aluva,Maintenance,Otis,September 2024'},
+  {id:6,filename:'Open Tender — HVAC Servicing Contract FY2025',category:'Tender',station:'Network',doc_date:'2024-09-01',severity:null,fault:null,resolution:null,engineer:'Procurement Cell',amount:'₹45 Lakhs',contract_expiry:'2024-11-15',reviewed:true,summary:'Open tender for HVAC servicing across 14 stations for FY2025. Estimated value ₹45L. Pre-bid meeting held 10 Sep 2024. Eligibility: ISO 9001 certified, min 5 years metro HVAC experience.',tags:'Tender,HVAC,FY2025,Procurement,Open Tender'},
+  {id:7,filename:'Rolling Stock Brake Inspection — Rake 06 Aug 2024',category:'Maintenance',station:'Depot',doc_date:'2024-08-05',severity:'Low',fault:'Minor brake pad wear on rake 06 (within acceptable limits)',resolution:'Brake pads replaced proactively; all other rakes within normal parameters',engineer:'D. Kumar',equipment:'Rake 06 — CAF Urbos 3',reviewed:true,summary:'Scheduled 90-day brake inspection. Rake 06 showed minor brake pad wear. Replacement carried out proactively. All 7 rakes inspected, no service disruption.',tags:'Brakes,Rolling Stock,Depot,Scheduled,Rake 06,CAF'},
+  {id:8,filename:'Annual Fire Safety Audit — Palarivattom 2024',category:'Safety',station:'Palarivattom',doc_date:'2024-06-20',severity:'Medium',fault:'2 fire extinguishers found past service date',resolution:'Extinguishers replaced; fire drill scheduled for Q3; sprinkler test completed',engineer:'Fire Safety Officer',reviewed:true,summary:'Annual fire safety audit at Palarivattom. All hydrant systems functional. 2 extinguishers past service date — replaced. Emergency lighting 100% operational.',tags:'Fire Safety,Palarivattom,Audit,Annual,Extinguisher,2024'},
+  {id:9,filename:'OCC Daily Operations Report — 22 Sep 2024',category:'Operations',station:'OCC',doc_date:'2024-09-22',severity:null,fault:null,resolution:null,engineer:'OCC Supervisor',reviewed:true,summary:'Daily operations — September 22, 2024. Ridership: 1,42,300 passengers. On-time performance: 98.7%. One minor delay at Edapally (2 min). All 36 services completed normally.',tags:'OCC,Operations,Daily Report,Ridership,September 2024'},
+  {id:10,filename:'Electrical Panel Replacement Tender — FY2025',category:'Tender',station:'Network',doc_date:'2024-09-15',severity:null,fault:null,resolution:null,engineer:'Procurement Cell',amount:'₹2.1 Crore',contract_expiry:'2024-12-28',reviewed:false,summary:'Tender for electrical panel replacement across 8 aging stations. Estimated value ₹2.1 Cr. Panels beyond 10-year service life. Technical evaluation in progress.',tags:'Tender,Electrical,Panels,FY2025,Procurement,December'},
+];
+
 // ── auth state ──
 let mmUser = null;
 try { const s = localStorage.getItem('mm-user'); if(s) mmUser = JSON.parse(s); } catch(e){}
@@ -961,6 +985,7 @@ function switchView(id, el) {
   const sub = document.getElementById('topbarSub');
   if (mmUser && mmUser.name && id === 'dashboard') sub.textContent = 'Welcome back, '+mmUser.name.split(' ')[0]+' 👋';
   else sub.textContent = s;
+  if (id === 'documents') loadDocuments();
 }
 function handleReportsNav() {
   if (isProUser()) {
@@ -1241,23 +1266,56 @@ const searchData = [
   {rank:3,title:'Monthly Fault Summary Report — July 2024',source:'KMRL-RPT-2024-JUL-003 · Inspection Report · p.8',snippet:'...total <mark>signalling</mark> faults across network in <mark>July 2024</mark>: 7 incidents at 4 stations. Palarivattom accounted for 43% of faults...',tags:['Summary','July 2024','Network-wide']},
   {rank:4,title:'Signalling SOP — Fault Response Procedure v3.1',source:'KMRL-SOP-SIG-007 · SOP · Clause 4.2',snippet:'...upon detection of <mark>signalling</mark> fault, Station Master shall initiate Level-2 alert within 5 minutes. Maintenance team response time: 30 minutes maximum...',tags:['SOP','Procedure','Signalling']},
 ];
-function doSearch(q) {
+async function doSearch(q) {
   if (!q.trim()) return;
   switchView('search', document.querySelector('[data-view=search]'));
   document.getElementById('searchInput').value = q;
-  const res = document.getElementById('searchResults');
+  const resEl = document.getElementById('searchResults');
   const meta = document.getElementById('resultsMeta');
   const container = document.getElementById('resultsContainer');
   const aha = document.getElementById('ahaAnswer');
-  res.classList.add('visible');
-  meta.textContent = `4 results for "${q}" · 0.38s`;
-  aha.innerHTML = `<div class="aha-answer"><div class="aha-badge">✦ Direct Answer</div><div class="aha-text">Based on maintenance logs Jun–Sep 2024, <strong>Palarivattom</strong> had the most signalling failures (3 incidents), followed by Edapally (2) and Aluva (1). Palarivattom accounts for 43% of all network signalling faults. All 3 Palarivattom incidents trace to moisture ingress in relay room B — a systemic issue, not isolated faults.</div></div>`;
-  container.innerHTML = searchData.map(r=>`
-    <div class="result-card">
-      <div class="result-top"><div class="result-rank">${r.rank}</div><div><div class="result-title">${r.title}</div><div class="result-source">${r.source}</div></div></div>
-      <div class="result-snippet">${r.snippet}</div>
-      <div class="result-tags">${r.tags.map(t=>`<span class="result-tag">${t}</span>`).join('')}</div>
-    </div>`).join('');
+  resEl.classList.add('visible');
+  meta.textContent = 'Searching…';
+  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Querying KMRL knowledge base…</div>';
+  aha.innerHTML = '';
+  const t0 = Date.now();
+  try {
+    const apiRes = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(q)}&top_k=6`);
+    const data = await apiRes.json();
+    const results = data.results || [];
+    const elapsed = ((Date.now()-t0)/1000).toFixed(2);
+    meta.textContent = `${results.length} results for "${q}" · ${elapsed}s`;
+    if (!results.length) {
+      container.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);">No documents found. Try different keywords.</div>';
+      return;
+    }
+    container.innerHTML = results.map((r,idx)=>`
+      <div class="result-card" onclick="openDocDetail(${r.doc_id})" title="Click to view document">
+        <div class="result-top">
+          <div class="result-rank">${idx+1}</div>
+          <div>
+            <div class="result-title">${r.filename||'Document'}</div>
+            <div class="result-source">${r.category||''} · ${r.station||'KMRL'} · ${(r.relevance_score*100).toFixed(0)}% match</div>
+          </div>
+        </div>
+        <div class="result-snippet">${r.text_snippet||''}…</div>
+        <div class="result-tags">
+          ${r.category?`<span class="result-tag">${r.category}</span>`:''}
+          ${r.station?`<span class="result-tag">${r.station}</span>`:''}
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    // fallback to demo data when backend is offline
+    const elapsed = ((Date.now()-t0)/1000).toFixed(2);
+    meta.textContent = `4 results for "${q}" · ${elapsed}s`;
+    aha.innerHTML = `<div class="aha-answer"><div class="aha-badge">✦ Direct Answer</div><div class="aha-text">Based on maintenance logs Jun–Sep 2024, <strong>Palarivattom</strong> had the most signalling failures (3 incidents), followed by Edapally (2) and Aluva (1). Palarivattom accounts for 43% of all network signalling faults. All 3 Palarivattom incidents trace to moisture ingress in relay room B — a systemic issue, not isolated faults.</div></div>`;
+    container.innerHTML = searchData.map(r=>`
+      <div class="result-card">
+        <div class="result-top"><div class="result-rank">${r.rank}</div><div><div class="result-title">${r.title}</div><div class="result-source">${r.source}</div></div></div>
+        <div class="result-snippet">${r.snippet}</div>
+        <div class="result-tags">${r.tags.map(t=>`<span class="result-tag">${t}</span>`).join('')}</div>
+      </div>`).join('');
+  }
 }
 
 // ── doc filter ──
@@ -1289,7 +1347,7 @@ function sendChat() {
   const r=ql.includes('sop')||ql.includes('evacuation')||ql.includes('emergency')?responses[0]:ql.includes('vendor')||ql.includes('contract')||ql.includes('expir')?responses[1]:responses[2];
   setTimeout(()=>{
     document.getElementById('typing')?.remove();
-    msgs.insertAdjacentHTML('beforeend',`<div class="chat-msg ai"><div class="msg-avatar ai-av">M</div><div><div class="msg-bubble">${r.text}<div class="citation-chips">${r.cites.map(c=>`<span class="citation"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>${c}</span>`).join('')}</div></div></div></div>`);
+    msgs.insertAdjacentHTML('beforeend',`<div class="chat-msg ai"><div class="msg-avatar ai-av">M</div><div><div class="msg-bubble">${r.text}<div class="citation-chips">${r.cites.map(c=>`<span class="citation" onclick="openDocBySource('${c.replace(/'/g,'\\\'')}')" title="Click to view document"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>${c}</span>`).join('')}</div></div></div></div>`);
     msgs.scrollTop=msgs.scrollHeight;
   },900);
 }
@@ -1304,6 +1362,153 @@ function shareEmail() {
   const sub = encodeURIComponent('DocuSense AI Report: Palarivattom Signalling Incident Analysis');
   const body = encodeURIComponent('Please find attached the Incident Intelligence Report for Palarivattom Signalling Failures (KMRL-IIR-2024-0047), generated by DocuSense AI.\n\nKey findings:\n- 3 HIGH severity signalling incidents in 90 days\n- Root cause: moisture ingress, relay room B\n- Recommended intervention: ₹11L (5:1 ROI)\n\nGenerated by DocuSense AI for Kochi Metro Rail Limited.');
   window.location.href = `mailto:?subject=${sub}&body=${body}`;
+}
+
+// ── document detail modal ──
+async function openDocDetail(docId) {
+  if (!docId && docId !== 0) return;
+  openModal('docDetailModal');
+  document.getElementById('docDetailInner').innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--muted)">Loading document…</div>';
+  if (DEMO_MODE) {
+    const doc = DEMO_DOCS.find(d => d.id === docId);
+    if (doc) { renderDocDetail(doc); } else { renderDocDetailFallback('Document #'+docId); }
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/documents/${docId}`);
+    if (!res.ok) throw new Error('not found');
+    const doc = await res.json();
+    renderDocDetail(doc);
+  } catch(e) {
+    document.getElementById('docDetailInner').innerHTML = '<div style="text-align:center;padding:24px;color:var(--danger);">Could not load document. Ensure the backend is running at <code>localhost:8000</code>.</div>';
+  }
+}
+
+async function openDocBySource(source) {
+  openModal('docDetailModal');
+  document.getElementById('docDetailInner').innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--muted)">Searching for document…</div>';
+  if (DEMO_MODE) { renderDocDetailFallback(source); return; }
+  try {
+    const query = source.split('·')[0].trim();
+    const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}&top_k=1`);
+    const data = await res.json();
+    const hit = data.results && data.results[0];
+    if (hit && hit.doc_id) {
+      const docRes = await fetch(`${API_BASE}/api/documents/${hit.doc_id}`);
+      if (!docRes.ok) throw new Error();
+      const doc = await docRes.json();
+      renderDocDetail(doc);
+    } else {
+      renderDocDetailFallback(source);
+    }
+  } catch(e) {
+    renderDocDetailFallback(source);
+  }
+}
+
+function renderDocDetail(doc) {
+  const sevColor = {Critical:'var(--danger)',High:'var(--warn)',Medium:'var(--accent)',Low:'var(--success)'}[doc.severity]||'var(--muted)';
+  const catIcon = {Maintenance:'🔧',Safety:'🛡',Tender:'📋',Operations:'🚇',Finance:'💰',HR:'👤',Vendor:'🤝',Other:'📄'}[doc.category]||'📄';
+  function field(label, value) {
+    if (!value) return '';
+    return `<div><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">${label}</div><div style="font-size:13px;color:var(--text);font-weight:500;">${value}</div></div>`;
+  }
+  const uploadDate = doc.upload_date ? new Date(doc.upload_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : null;
+  document.getElementById('docDetailInner').innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;">
+      <div style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--card);border:1px solid var(--border);flex-shrink:0;">${catIcon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px;word-break:break-word;">${doc.filename||'Document'}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--accent-dim);color:var(--accent);">${doc.category||'Other'}</span>
+          ${doc.severity?`<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:var(--card);color:${sevColor};">● ${doc.severity}</span>`:''}
+          ${doc.reviewed?`<span style="font-size:11px;font-weight:600;color:var(--success);">✓ Reviewed</span>`:`<span style="font-size:11px;color:var(--muted);">◌ Pending</span>`}
+        </div>
+      </div>
+    </div>
+    ${doc.summary?`<div style="background:var(--accent-dim);border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;margin-bottom:16px;font-size:13px;color:var(--text);line-height:1.6;">${doc.summary}</div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-bottom:14px;">
+      ${field('Date',doc.doc_date)}
+      ${field('Station',doc.station)}
+      ${field('Equipment',doc.equipment)}
+      ${field('Engineer',doc.engineer)}
+      ${field('Vendor',doc.vendor)}
+      ${field('Amount',doc.amount)}
+      ${field('Contract Expiry',doc.contract_expiry)}
+      ${field('Uploaded',uploadDate)}
+    </div>
+    ${doc.fault?`<div style="margin-bottom:12px;"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Fault</div><div style="font-size:13px;font-weight:700;color:${sevColor};">${doc.fault}</div></div>`:''}
+    ${doc.resolution?`<div style="margin-bottom:12px;"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Resolution</div><div style="font-size:13px;color:var(--text-2);line-height:1.6;">${doc.resolution}</div></div>`:''}
+    ${doc.tags?`<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;">${doc.tags.split(',').filter(Boolean).map(t=>`<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--card);color:var(--text-2);border:1px solid var(--border);">${t.trim()}</span>`).join('')}</div>`:''}
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);text-align:right;">
+      <button onclick="closeModal('docDetailModal')" style="padding:7px 18px;border-radius:7px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer;">Close</button>
+    </div>
+  `;
+}
+
+function renderDocDetailFallback(source) {
+  const ref = source.split('·')[0].trim();
+  const page = source.split('·').slice(1).join('·').trim()||'KMRL Document';
+  document.getElementById('docDetailInner').innerHTML = `
+    <div style="text-align:center;padding:32px 16px;">
+      <div style="font-size:28px;margin-bottom:12px;">📄</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;">${ref}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">${page}</div>
+      <div style="font-size:12px;color:var(--muted);">Full document viewer available when running locally with the backend. <a href="https://github.com/25-THEBEaST-25/KMRL-DocuSense" target="_blank" style="color:var(--accent)">Setup guide →</a></div>
+    </div>
+    <div style="text-align:right;padding-top:12px;border-top:1px solid var(--border);">
+      <button onclick="closeModal('docDetailModal')" style="padding:7px 18px;border-radius:7px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer;">Close</button>
+    </div>
+  `;
+}
+
+// ── load documents from API ──
+async function loadDocuments() {
+  const table = document.querySelector('.doc-table');
+  if (!table) return;
+  table.querySelectorAll('.doc-row').forEach(r => r.remove());
+  const loading = document.createElement('div');
+  loading.style.cssText = 'padding:20px;text-align:center;color:var(--muted);font-size:12px;';
+  loading.textContent = 'Loading documents from KMRL database…';
+  table.appendChild(loading);
+  let docs;
+  if (DEMO_MODE) {
+    docs = DEMO_DOCS;
+  } else {
+    try {
+      const res = await fetch(`${API_BASE}/api/documents`);
+      if (!res.ok) throw new Error();
+      docs = await res.json();
+    } catch(e) {
+      loading.textContent = 'Backend offline — start uvicorn main:app --reload to see live documents.';
+      return;
+    }
+  }
+  loading.remove();
+  const catToType = {Maintenance:'maintenance',Tender:'tender',Safety:'sop',Vendor:'vendor',Operations:'maintenance',Finance:'maintenance',HR:'maintenance',Other:'maintenance'};
+  const catIcon = {Maintenance:'🔧',Safety:'🛡',Tender:'📋',Operations:'🚇',Finance:'💰',HR:'👤',Vendor:'🤝',Other:'📄'};
+  docs.forEach(doc => {
+    const icon = catIcon[doc.category]||'📄';
+    const statusClass = doc.reviewed?'status-indexed':'status-pending';
+    const statusText = doc.reviewed?'● Indexed':'◌ Pending';
+    const date = doc.doc_date||(doc.upload_date?doc.upload_date.split('T')[0]:'');
+    const row = document.createElement('div');
+    row.className = 'doc-row';
+    row.dataset.type = catToType[doc.category]||'maintenance';
+    row.onclick = () => openDocDetail(doc.id);
+    row.innerHTML = `
+      <div class="doc-name">
+        <div class="doc-icon" style="background:var(--card);border:1px solid var(--border)">${icon}</div>
+        <div><div class="doc-title">${doc.filename||'Untitled'}</div><div class="doc-id">DOC-${String(doc.id).padStart(4,'0')}</div></div>
+      </div>
+      <div class="doc-cell col-station">${doc.station||'Network'}</div>
+      <div class="doc-cell col-size">${doc.category||'Other'}</div>
+      <div class="doc-cell">${date}</div>
+      <div><span class="doc-status ${statusClass}">${statusText}</span></div>`;
+    table.appendChild(row);
+  });
+  const badge = document.querySelector('[data-view="documents"] .nav-badge');
+  if (badge) badge.textContent = DEMO_MODE ? '95+' : docs.length;
 }
 
 // ── init ──
