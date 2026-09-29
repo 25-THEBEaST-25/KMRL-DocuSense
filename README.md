@@ -7,6 +7,8 @@
 
 > **Live Demo (no setup needed):** [25-thebeast-25.github.io/KMRL-DocuSense](https://25-thebeast-25.github.io/KMRL-DocuSense/)
 
+> **Docs:** [Architecture](docs/architecture.md) · [Setup Guide](docs/setup.md)
+
 An AI-powered document intelligence platform built for **Kochi Metro Rail Limited (KMRL)**. Replaces manual PDF hunting with semantic search, natural language Q&A, and automated incident intelligence reports — all running on-premises with no cloud data exposure.
 
 ---
@@ -111,7 +113,7 @@ sudo apt install tesseract-ocr poppler-utils
 cd backend
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env          # add OPENAI_API_KEY
+cp .env.example .env          # add LLM_API_KEY (see backend/.env.example for providers)
 python seed_db.py             # loads 95 KMRL documents
 uvicorn main:app --reload
 ```
@@ -131,7 +133,7 @@ uvicorn main:app --reload
 | `POST` | `/api/assistant/ask` | RAG Q&A with source citations |
 | `GET` | `/api/dashboard/stats` | KPIs: total docs, category breakdown, station-wise |
 | `GET` | `/api/dashboard/incident-intelligence` | Fault trend analysis (this vs last month) |
-| `GET` | `/api/dashboard/expiry-alerts` | Contracts and SOPs expiring in next 30 days |
+| `GET` | `/api/dashboard/expiring-contracts` | Contracts and SOPs expiring in next 30 days |
 
 Interactive docs: `http://localhost:8000/docs`
 
@@ -142,8 +144,9 @@ Interactive docs: `http://localhost:8000/docs`
 Copy `.env.example` to `.env` and fill in:
 
 ```env
-OPENAI_API_KEY=sk-...           # or any OpenAI-compatible endpoint
-LLM_BASE_URL=                   # optional: point to Ollama or other local LLM
+LLM_BASE_URL=https://api.groq.com/openai/v1   # or OpenAI / local Ollama — see .env.example
+LLM_API_KEY=your_key_here
+LLM_MODEL=llama-3.1-70b-versatile
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 SQLITE_PATH=data/kmrl.db
 CHROMA_DIR=data/chroma_db

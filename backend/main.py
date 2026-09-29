@@ -34,3 +34,8 @@ app.include_router(dashboard.router)
 @app.get("/")
 def root():
     return {"status": "Kochi Metro AI backend running", "docs": "/docs"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
